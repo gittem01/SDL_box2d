@@ -1,6 +1,48 @@
 #include <Base.h>
 #include <DebugRenderer.h>
 
+void createTestBodies(b2World* world)
+{
+    // box0
+    b2BodyDef boxBodyDef;
+    boxBodyDef.type = b2_dynamicBody;
+    boxBodyDef.position.Set(0.0f, 0.0f);
+    b2Body* boxBody = world->CreateBody(&boxBodyDef);
+
+    b2PolygonShape boxShape;
+    boxShape.SetAsBox(1.0f, 1.0f);
+    boxBody->CreateFixture(&boxShape, 1.0f);
+
+    boxBody->SetAngularVelocity(1.0);
+
+    // box1
+    boxBodyDef.position.Set(0.6f, 2.5f);
+    boxBody = world->CreateBody(&boxBodyDef);
+
+    boxShape.SetAsBox(1.0f, 1.0f);
+    boxBody->CreateFixture(&boxShape, 1.0f);
+
+    // static box
+    boxBodyDef.type = b2_staticBody;
+    boxBodyDef.position.Set(0.0f, -10.0f);
+    boxBody = world->CreateBody(&boxBodyDef);
+
+    boxShape.SetAsBox(100.0f, 1.0f);
+    boxBody->CreateFixture(&boxShape, 1.0f);
+
+    // circle
+    b2BodyDef circleBodyDef;
+    circleBodyDef.type = b2_dynamicBody;
+    circleBodyDef.position.Set(5.0f, 0.0f);
+    b2Body* circleBody = world->CreateBody(&circleBodyDef);
+
+    b2CircleShape circleShape;
+    circleShape.m_radius = 1.0f;
+    circleBody->CreateFixture(&circleShape, 1.0f);
+
+    circleBody->SetAngularVelocity(8.0);
+}
+
 Base::Base()
 {
     SDL_Init(SDL_INIT_VIDEO);
@@ -24,34 +66,7 @@ Base::Base()
     debugRenderer->SetFlags(b2Draw::e_shapeBit | b2Draw::e_centerOfMassBit);
     world->SetDebugDraw(debugRenderer);
 
-    b2BodyDef boxBodyDef;
-    boxBodyDef.type = b2_dynamicBody;
-    boxBodyDef.position.Set(0.0f, 0.0f);
-    b2Body* boxBody = world->CreateBody(&boxBodyDef);
-
-    b2PolygonShape boxShape;
-    boxShape.SetAsBox(1.0f, 1.0f);
-    boxBody->CreateFixture(&boxShape, 1.0f);
-
-    boxBody->SetAngularVelocity(1.0);
-
-    boxBodyDef.type = b2_staticBody;
-    boxBodyDef.position.Set(0.0f, -10.0f);
-    boxBody = world->CreateBody(&boxBodyDef);
-
-    boxShape.SetAsBox(100.0f, 1.0f);
-    boxBody->CreateFixture(&boxShape, 1.0f);
-
-    b2BodyDef circleBodyDef;
-    circleBodyDef.type = b2_dynamicBody;
-    circleBodyDef.position.Set(5.0f, 0.0f);
-    b2Body* circleBody = world->CreateBody(&circleBodyDef);
-
-    b2CircleShape circleShape;
-    circleShape.m_radius = 1.0f;
-    circleBody->CreateFixture(&circleShape, 1.0f);
-
-    circleBody->SetAngularVelocity(-1.0);
+    createTestBodies(world);
 }
 
 Base::~Base()
