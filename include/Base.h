@@ -10,6 +10,11 @@ public:
 	class DebugRenderer* debugRenderer;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
+	char keyPresses[SDL_NUM_SCANCODES]{};
+	std::vector<SDL_Scancode> pressedKeys;
+
+	float deltaTime = 0.0f;
+	uint32 renderFlags = 0x1F; // initially render everything
 
 	int width = 1280;
 	int height = 720;

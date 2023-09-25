@@ -1,5 +1,6 @@
 #include <Base.h>
 #include <DebugRenderer.h>
+#include <chrono>
 
 void createTestBodies(b2World* world)
 {
@@ -52,7 +53,7 @@ void createTestBodies(b2World* world)
     jDef.collideConnected = true;
 
     jDef.target = circleBody->GetPosition() - b2Vec2(1.0, 0.0);
-    jDef.maxForce = circleBody->GetMass() * 2.0f;
+    jDef.maxForce = circleBody->GetMass() * 10.0f;
     
     b2LinearStiffness(jDef.stiffness, jDef.damping, 1.0f, 0.0f, jDef.bodyA, jDef.bodyB);
 
@@ -64,6 +65,8 @@ void createTestBodies(b2World* world)
 
 Base::Base()
 {
+    memset(keyPresses, 0, SDL_NUM_SCANCODES);
+
     SDL_Init(SDL_INIT_VIDEO);
 
     window = SDL_CreateWindow("SDL Debug Renderer",
@@ -78,11 +81,25 @@ Base::Base()
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    b2Vec2 gravity = b2Vec2(0.0f, -1.0f);
+    SDL_DisplayMode displayMode;
+    bool res = SDL_GetDisplayMode(0, 0, &displayMode);
+
+    int refreshRate;
+    if (displayMode.refresh_rate > 0 && res)
+    {
+        refreshRate = displayMode.refresh_rate;
+    }
+    else
+    {
+		refreshRate = 60;
+	}
+    deltaTime = 1.0f / (float)refreshRate;
+
+    b2Vec2 gravity = b2Vec2(0.0f, -5.0f);
     world = new b2World(gravity);
 
     debugRenderer = new DebugRenderer(this);
-    debugRenderer->SetFlags(0x1F); // render everything
+    debugRenderer->SetFlags(renderFlags);
     world->SetDebugDraw(debugRenderer);
 
     createTestBodies(world);
@@ -100,6 +117,12 @@ Base::~Base()
 
 void Base::handleEvents()
 {
+    for (SDL_Scancode pressedKey : pressedKeys)
+    {
+        if (keyPresses[pressedKey]) keyPresses[pressedKey] = 1;
+    }
+    pressedKeys.clear();
+
     SDL_Event e;
     while (SDL_PollEvent(&e) != 0)
     {
@@ -109,7 +132,17 @@ void Base::handleEvents()
             shouldQuit = true;
             break;
         case SDL_MOUSEWHEEL:
-            debugRenderer->scaleFactor += (float)e.wheel.y;
+            debugRenderer->scaleFactor *= 1.0f + (float)e.wheel.y * 0.1f;
+            break;
+        case SDL_KEYDOWN:
+            if (!e.key.repeat)
+            {
+                keyPresses[e.key.keysym.scancode] = 2;
+                pressedKeys.push_back(e.key.keysym.scancode);
+            }
+            break;
+        case SDL_KEYUP:
+            keyPresses[e.key.keysym.scancode] = 0;
             break;
         case SDL_WINDOWEVENT:
             switch (e.window.event)
@@ -124,15 +157,32 @@ void Base::handleEvents()
         default:
             break;
         }
-        if (e.type == SDL_QUIT)
+    }
+
+    if (keyPresses[SDL_SCANCODE_A] || keyPresses[SDL_SCANCODE_LEFT])
+        debugRenderer->camPos.x -= (200.0f * deltaTime) / debugRenderer->scaleFactor;
+    if (keyPresses[SDL_SCANCODE_D] || keyPresses[SDL_SCANCODE_RIGHT])
+        debugRenderer->camPos.x += (200.0f * deltaTime) / debugRenderer->scaleFactor;
+    if (keyPresses[SDL_SCANCODE_W] || keyPresses[SDL_SCANCODE_UP])
+        debugRenderer->camPos.y += (200.0f * deltaTime) / debugRenderer->scaleFactor;
+    if (keyPresses[SDL_SCANCODE_S] || keyPresses[SDL_SCANCODE_DOWN])
+        debugRenderer->camPos.y -= (200.0f * deltaTime) / debugRenderer->scaleFactor;
+
+    if (keyPresses[SDL_SCANCODE_Z]) debugRenderer->scaleFactor *= 1.0f + 1.0f * deltaTime;
+    if (keyPresses[SDL_SCANCODE_X]) debugRenderer->scaleFactor *= 1.0f - 1.0f * deltaTime;
+
+    debugRenderer->scaleFactor = std::max(std::min(debugRenderer->scaleFactor, debugRenderer->maxScale), debugRenderer->minScale);
+
+    for (int i = 0; i < 5; i++)
+    {
+        int maskCode = SDL_SCANCODE_1 + i;
+        if (keyPresses[maskCode] == 2)
         {
-            shouldQuit = true;
-        }
-        else if (e.type == SDL_MOUSEWHEEL)
-        {
-            debugRenderer->scaleFactor += (float)e.wheel.y;
+            renderFlags ^= 1 << i;
         }
     }
+
+    debugRenderer->SetFlags(renderFlags);
 }
 
 void Base::loop()
@@ -141,7 +191,7 @@ void Base::loop()
     {
         handleEvents();
 
-        world->Step(1.0f / 60.0f, 8, 3);
+        world->Step(deltaTime, 8, 3);
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
         SDL_RenderClear(renderer);
