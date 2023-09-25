@@ -53,7 +53,7 @@ void createTestBodies(b2World* world)
     jDef.collideConnected = true;
 
     jDef.target = circleBody->GetPosition() - b2Vec2(1.0, 0.0);
-    jDef.maxForce = circleBody->GetMass() * 10.0f;
+    jDef.maxForce = circleBody->GetMass() * 20.0f;
     
     b2LinearStiffness(jDef.stiffness, jDef.damping, 1.0f, 0.0f, jDef.bodyA, jDef.bodyB);
 
@@ -85,7 +85,7 @@ Base::Base()
     bool res = SDL_GetDisplayMode(0, 0, &displayMode);
 
     int refreshRate;
-    if (displayMode.refresh_rate > 0 && res)
+    if (displayMode.refresh_rate > 0 && res == 0)
     {
         refreshRate = displayMode.refresh_rate;
     }
@@ -95,7 +95,7 @@ Base::Base()
 	}
     deltaTime = 1.0f / (float)refreshRate;
 
-    b2Vec2 gravity = b2Vec2(0.0f, -5.0f);
+    b2Vec2 gravity = b2Vec2(0.0f, -10.0f);
     world = new b2World(gravity);
 
     debugRenderer = new DebugRenderer(this);
