@@ -7,9 +7,9 @@ class DebugRenderer : public b2Draw
 private:
 	const int CIRCLE_EDGES = 64;
 
-	// preallocated vertices and indices
+	// preallocated vertices
 	std::vector<SDL_Vertex> allocatedVertices;
-	// latest indices are hold for circles
+	// precalculated indices to render polygons
 	std::vector<std::vector<int>> indices;
 public:
 	class Base* base;
@@ -20,7 +20,7 @@ public:
 	DebugRenderer(Base* base);
 
 	void precalculateIndices();
-	b2Vec2 translateToScreenCoords(b2Vec2 vec);
+	b2Vec2 translateToScreenCoords(b2Vec2 vec) const;
 
 	virtual ~DebugRenderer() {}
 

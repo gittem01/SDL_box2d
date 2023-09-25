@@ -22,6 +22,10 @@ void createTestBodies(b2World* world)
     boxShape.SetAsBox(1.0f, 1.0f);
     boxBody->CreateFixture(&boxShape, 1.0f);
 
+    // second fixture for box1
+    boxShape.SetAsBox(0.5f, 0.5f, b2Vec2(0.0f, 0.8f), b2_pi * 0.25f);
+    boxBody->CreateFixture(&boxShape, 1.0f);
+
     // static box
     boxBodyDef.type = b2_staticBody;
     boxBodyDef.position.Set(0.0f, -10.0f);
@@ -41,6 +45,21 @@ void createTestBodies(b2World* world)
     circleBody->CreateFixture(&circleShape, 1.0f);
 
     circleBody->SetAngularVelocity(8.0);
+
+    b2MouseJointDef jDef;
+    jDef.bodyA = boxBody;
+    jDef.bodyB = circleBody;
+    jDef.collideConnected = true;
+
+    jDef.target = circleBody->GetPosition() - b2Vec2(1.0, 0.0);
+    jDef.maxForce = circleBody->GetMass() * 2.0f;
+    
+    b2LinearStiffness(jDef.stiffness, jDef.damping, 1.0f, 0.0f, jDef.bodyA, jDef.bodyB);
+
+    b2MouseJoint* mj = (b2MouseJoint*)world->CreateJoint(&jDef);
+
+    b2Vec2 nextTarget = b2Vec2(0.0, -3.0);
+    mj->SetTarget(nextTarget);
 }
 
 Base::Base()
@@ -63,7 +82,7 @@ Base::Base()
     world = new b2World(gravity);
 
     debugRenderer = new DebugRenderer(this);
-    debugRenderer->SetFlags(b2Draw::e_shapeBit | b2Draw::e_centerOfMassBit);
+    debugRenderer->SetFlags(0x1F); // render everything
     world->SetDebugDraw(debugRenderer);
 
     createTestBodies(world);
@@ -90,7 +109,7 @@ void Base::handleEvents()
             shouldQuit = true;
             break;
         case SDL_MOUSEWHEEL:
-            debugRenderer->scaleFactor += e.wheel.y;
+            debugRenderer->scaleFactor += (float)e.wheel.y;
             break;
         case SDL_WINDOWEVENT:
             switch (e.window.event)
@@ -111,7 +130,7 @@ void Base::handleEvents()
         }
         else if (e.type == SDL_MOUSEWHEEL)
         {
-            debugRenderer->scaleFactor += e.wheel.y;
+            debugRenderer->scaleFactor += (float)e.wheel.y;
         }
     }
 }

@@ -1,6 +1,7 @@
 #include <box2d/box2d.h>
 #include <SDL2/SDL.h>
 #include <vector>
+#include <math.h>
 
 class Base
 {
